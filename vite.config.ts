@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      include: ["sonner", "@lovable.dev/cloud-auth-js", "@supabase/supabase-js", "lucide-react"],
+    },
+  },
 });
