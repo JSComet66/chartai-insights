@@ -24,6 +24,15 @@ const directional = {
   },
 };
 const nullableString = { type: ["string", "null"] };
+const factorSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["label", "kind"],
+  properties: {
+    label: { type: "string" },
+    kind: { type: "string", enum: ["positive", "warning"] },
+  },
+};
 
 const SCHEMA = {
   type: "object",
@@ -33,6 +42,8 @@ const SCHEMA = {
     "summary", "trend", "market_structure", "trend_explanation", "supports", "resistances",
     "indicators", "bullish_scenario", "bearish_scenario", "neutral_scenario", "risk_notes",
     "risk_reward", "analysis_quality", "quality_explanation",
+    "bullish_conviction", "bearish_conviction", "data_quality",
+    "bullish_factors", "bearish_factors", "conviction_explanation",
   ],
   properties: {
     is_chart: { type: "boolean" },
@@ -74,6 +85,12 @@ const SCHEMA = {
     risk_reward: nullableString,
     analysis_quality: { type: "string", enum: ["Faible", "Moyenne", "Élevée"] },
     quality_explanation: { type: "string" },
+    bullish_conviction: { type: "integer" },
+    bearish_conviction: { type: "integer" },
+    data_quality: { type: "string", enum: ["low", "medium", "high"] },
+    bullish_factors: { type: "array", items: factorSchema },
+    bearish_factors: { type: "array", items: factorSchema },
+    conviction_explanation: { type: "string" },
   },
 };
 
@@ -89,7 +106,16 @@ Règles absolues :
 - risk_notes : rappel éducatif sur le risque, l'invalidation et le fait de ne jamais risquer une somme qu'on ne peut pas se permettre de perdre.
 - analysis_quality reflète UNIQUEMENT la netteté et la quantité d'informations visibles dans la capture, jamais une probabilité de gain.
 - Si l'image n'est pas un graphique financier : is_chart = false. Si elle est floue ou trop incomplète : image_readable = false et explique-le dans summary.
-- Mets un scénario à null si les données ne permettent pas de le formuler.`;
+- Mets un scénario à null si les données ne permettent pas de le formuler.
+
+Conviction technique :
+- bullish_conviction et bearish_conviction : entiers de 0 à 100 mesurant la COHÉRENCE des éléments techniques visibles avec chaque scénario. Ce n'est PAS une probabilité. Les deux scores sont indépendants et n'ont pas à totaliser 100.
+- Facteurs possibles : tendance générale, structure de marché, supports, résistances, cassures et retests visibles, moyennes mobiles, RSI, MACD, volume, figures chartistes claires, cohérence entre éléments, lisibilité de la capture.
+- Chaque facteur a une influence limitée (aucun facteur seul ne doit dépasser environ 20 points). Un élément non visible ou non identifiable n'est ni inventé ni utilisé dans le calcul.
+- Reste prudent : si la capture est floue, partielle ou pauvre en informations, garde les deux scores modérés ou bas (rarement au-delà de 60).
+- data_quality : low / medium / high selon la lisibilité et la quantité d'informations visibles.
+- bullish_factors / bearish_factors : 2 à 5 facteurs courts (quelques mots). kind = "positive" pour un élément qui soutient le scénario, "warning" pour une limite ou un élément manquant.
+- conviction_explanation : 1 à 3 phrases expliquant ce qui soutient et limite chaque conviction, basées uniquement sur les éléments détectés. N'écris jamais « X% de chances », écris « X% de conviction technique … selon les éléments visibles ».`;
 
 export class ChartAIError extends Error {
   constructor(message: string, public status = 500) {
