@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, TrendingUp, TrendingDown, Minus, HelpCircle } from "lucide-react";
-import type { AnalysisRow, AnalysisResult, Level } from "@/lib/analysis-types";
+import { AlertTriangle, TrendingUp, TrendingDown, Minus, HelpCircle, Check } from "lucide-react";
+import type { AnalysisRow, AnalysisResult, Level, ConvictionFactor } from "@/lib/analysis-types";
 
 const trendStyle: Record<AnalysisResult["trend"], { cls: string; Icon: typeof TrendingUp; label: string }> = {
   haussière: { cls: "text-bullish bg-bullish/10 border-bullish/30", Icon: TrendingUp, label: "Haussière" },
@@ -129,6 +129,26 @@ export function AnalysisView({ row, imageUrl }: { row: AnalysisRow; imageUrl: st
           )}
         </Section>
 
+        {typeof r.bullish_conviction === "number" && typeof r.bearish_conviction === "number" && (
+          <Section title="Conviction technique">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ConvictionCard title="Scénario haussier" value={r.bullish_conviction} tone="bullish" factors={r.bullish_factors ?? []} factorsTitle="Facteurs haussiers" />
+              <ConvictionCard title="Scénario baissier" value={r.bearish_conviction} tone="bearish" factors={r.bearish_factors ?? []} factorsTitle="Facteurs baissiers" />
+            </div>
+            {r.data_quality && (
+              <p className="mt-4 text-sm"><span className="text-muted-foreground">Qualité des données : </span><span className="font-semibold text-info">{dataQualityLabel[r.data_quality]}</span></p>
+            )}
+            {r.conviction_explanation && <p className="mt-2 text-sm leading-relaxed">{r.conviction_explanation}</p>}
+            <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <li><span className="font-mono">0–30%</span> : faible cohérence avec le scénario</li>
+              <li><span className="font-mono">31–60%</span> : cohérence modérée</li>
+              <li><span className="font-mono">61–80%</span> : cohérence importante</li>
+              <li><span className="font-mono">81–100%</span> : forte cohérence des éléments visibles</li>
+            </ul>
+            <p className="mt-3 text-[11px] text-muted-foreground/80">Ce score mesure la cohérence des signaux techniques détectés. Il ne constitue pas une probabilité de mouvement futur et ne garantit aucun résultat.</p>
+          </Section>
+        )}
+
         <Section title="Scénarios possibles">
           <div className="space-y-3">
             {r.bullish_scenario && (
@@ -167,6 +187,43 @@ export function AnalysisView({ row, imageUrl }: { row: AnalysisRow; imageUrl: st
           </div>
         </Section>
       </div>
+    </div>
+  );
+}
+
+const dataQualityLabel = { low: "Faible", medium: "Moyenne", high: "Élevée" } as const;
+
+function ConvictionCard({ title, value, tone, factors, factorsTitle }: {
+  title: string; value: number; tone: "bullish" | "bearish"; factors: ConvictionFactor[]; factorsTitle: string;
+}) {
+  const v = Math.max(0, Math.min(100, Math.round(value)));
+  const text = tone === "bullish" ? "text-bullish" : "text-bearish";
+  const bar = tone === "bullish" ? "bg-bullish" : "bg-bearish";
+  const border = tone === "bullish" ? "border-bullish/30" : "border-bearish/30";
+  const word = tone === "bullish" ? "haussière" : "baissière";
+  return (
+    <div className={`rounded-lg border bg-surface p-4 ${border}`}>
+      <p className={`text-sm font-semibold ${text}`}>{title}</p>
+      <p className="mt-2 font-mono text-3xl font-bold">{v}%</p>
+      <p className="text-xs text-muted-foreground">Conviction technique {word} selon les éléments visibles</p>
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className={`h-full rounded-full ${bar}`} style={{ width: `${v}%` }} />
+      </div>
+      {factors.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{factorsTitle}</p>
+          <ul className="mt-2 space-y-1">
+            {factors.map((f, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm">
+                {f.kind === "positive"
+                  ? <Check className={`mt-0.5 h-4 w-4 shrink-0 ${text}`} />
+                  : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />}
+                <span>{f.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
