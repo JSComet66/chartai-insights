@@ -21,18 +21,21 @@ export const runAnalysis = createServerFn({ method: "POST" })
       return { ok: false, error: "Image invalide." };
     }
 
-    const { data: signed, error: signError } = await supabase.storage
-      .from("charts")
-      .createSignedUrl(data.imagePath, 600);
-    if (signError || !signed) {
+    const { data: blob, error: dlError } = await supabase.storage.from("charts").download(data.imagePath);
+    if (dlError || !blob) {
       return { ok: false, error: "Image introuvable. Importez-la à nouveau." };
     }
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    const mime = blob.type && blob.type.startsWith("image/") ? blob.type : "image/png";
+    const dataUrl = `data:${mime};base64,${btoa(bin)}`;
 
     const { analyzeChartImage, ChartAIError } = await import("./chart-ai.server");
     let result;
     try {
       result = await analyzeChartImage({
-        imageUrl: signed.signedUrl,
+        imageUrl: dataUrl,
         asset: data.asset ?? null,
         timeframe: data.timeframe ?? null,
         market: data.market ?? null,
