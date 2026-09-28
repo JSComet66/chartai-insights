@@ -103,7 +103,7 @@ function Home() {
 }
 
 function HeroPreview() {
-  const candles = [
+  const candles: [number, number, number][] = [
     [30, 50, 1], [45, 62, 1], [55, 58, 0], [50, 70, 1], [62, 66, 0], [58, 80, 1], [72, 76, 0], [70, 90, 1],
     [82, 86, 0], [78, 94, 1], [88, 92, 0], [85, 100, 1],
   ];

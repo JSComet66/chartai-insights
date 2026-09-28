@@ -25,11 +25,11 @@ function ResetPassword() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (password.length < 8) return toast.error("Le mot de passe doit contenir au moins 8 caractères.");
+    if (password.length < 8) { toast.error("Le mot de passe doit contenir au moins 8 caractères."); return; }
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
-    if (error) return toast.error("Lien expiré ou invalide. Refais une demande de réinitialisation.");
+    if (error) { toast.error("Lien expiré ou invalide. Refais une demande de réinitialisation."); return; }
     toast.success("Mot de passe mis à jour.");
     navigate({ to: "/analyse" });
   }

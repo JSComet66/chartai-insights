@@ -32,9 +32,9 @@ function Profile() {
   });
 
   async function changePw() {
-    if (pw.length < 8) return toast.error("Le mot de passe doit contenir au moins 8 caractères.");
+    if (pw.length < 8) { toast.error("Le mot de passe doit contenir au moins 8 caractères."); return; }
     const { error } = await supabase.auth.updateUser({ password: pw });
-    if (error) return toast.error("Mise à jour impossible.");
+    if (error) { toast.error("Mise à jour impossible."); return; }
     setPw("");
     toast.success("Mot de passe mis à jour.");
   }

@@ -33,9 +33,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
     try {
       result = await analyzeChartImage({
         imageUrl: signed.signedUrl,
-        asset: data.asset,
-        timeframe: data.timeframe,
-        market: data.market,
+        asset: data.asset ?? null,
+        timeframe: data.timeframe ?? null,
+        market: data.market ?? null,
       });
     } catch (e) {
       if (e instanceof ChartAIError) return { ok: false, error: e.message };

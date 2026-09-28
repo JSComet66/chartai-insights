@@ -99,9 +99,9 @@ export class ChartAIError extends Error {
 
 export async function analyzeChartImage(input: {
   imageUrl: string;
-  asset?: string | null;
-  timeframe?: string | null;
-  market?: string | null;
+  asset?: string | null | undefined;
+  timeframe?: string | null | undefined;
+  market?: string | null | undefined;
 }): Promise<AnalysisResult> {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new ChartAIError("Le service d'analyse n'est pas configuré.");
