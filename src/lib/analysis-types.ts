@@ -34,7 +34,16 @@ export type AnalysisResult = {
   risk_reward: string | null;
   analysis_quality: "Faible" | "Moyenne" | "Élevée";
   quality_explanation: string;
+  // Conviction technique (absent on older analyses)
+  bullish_conviction?: number;
+  bearish_conviction?: number;
+  data_quality?: "low" | "medium" | "high";
+  bullish_factors?: ConvictionFactor[];
+  bearish_factors?: ConvictionFactor[];
+  conviction_explanation?: string;
 };
+
+export type ConvictionFactor = { label: string; kind: "positive" | "warning" };
 
 export type AnalysisRow = {
   id: string;
