@@ -8,7 +8,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { signedChartUrls } from "@/lib/storage";
+import { deleteAnalysis, signedChartUrls } from "@/lib/storage";
 import type { AnalysisRow } from "@/lib/analysis-types";
 import { TrendBadge } from "@/components/AnalysisView";
 
@@ -23,12 +23,6 @@ export const Route = createFileRoute("/_authenticated/analyses/")({
   }),
   component: MyAnalyses,
 });
-
-export async function deleteAnalysis(row: Pick<AnalysisRow, "id" | "image_url">) {
-  const { error } = await supabase.from("analyses").delete().eq("id", row.id);
-  if (error) throw error;
-  await supabase.storage.from("charts").remove([row.image_url]);
-}
 
 function MyAnalyses() {
   const qc = useQueryClient();

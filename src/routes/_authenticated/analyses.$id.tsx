@@ -4,10 +4,9 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { signedChartUrl } from "@/lib/storage";
+import { deleteAnalysis, signedChartUrl } from "@/lib/storage";
 import type { AnalysisRow } from "@/lib/analysis-types";
 import { AnalysisView } from "@/components/AnalysisView";
-import { deleteAnalysis } from "./analyses.index";
 
 export const Route = createFileRoute("/_authenticated/analyses/$id")({
   head: () => ({

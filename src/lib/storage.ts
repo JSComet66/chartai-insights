@@ -14,3 +14,9 @@ export async function signedChartUrls(paths: string[]): Promise<Record<string, s
   });
   return map;
 }
+
+export async function deleteAnalysis(row: { id: string; image_url: string }) {
+  const { error } = await supabase.from("analyses").delete().eq("id", row.id);
+  if (error) throw error;
+  await supabase.storage.from("charts").remove([row.image_url]);
+}
