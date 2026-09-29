@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deleteAnalysis, signedChartUrl } from "@/lib/storage";
 import type { AnalysisRow } from "@/lib/analysis-types";
 import { AnalysisView } from "@/components/AnalysisView";
+import { TechnicalEngineSection } from "@/components/TechnicalEngineSection";
 
 export const Route = createFileRoute("/_authenticated/analyses/$id")({
   head: () => ({
@@ -62,6 +63,7 @@ function AnalysisDetail() {
         <Button variant="ghost" size="sm" onClick={remove}><Trash2 className="mr-1 h-4 w-4" />Supprimer</Button>
       </div>
       <AnalysisView row={data.row} imageUrl={data.url} />
+      <TechnicalEngineSection imageUrl={data.url} ai={data.row.analysis_result} analysisId={data.row.id} />
     </div>
   );
 }
