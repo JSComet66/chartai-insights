@@ -11,3 +11,4 @@
 
 - Chart AI analysis runs in `runAnalysis` server fn (src/lib/analysis.functions.ts) calling src/lib/chart-ai.server.ts; images are sent as base64 data URLs because the AI provider cannot fetch private storage URLs.
 - Chart images live in private `charts` bucket under `<user_id>/…`; UI uses signed URLs.
+- Technical engine (src/lib/technical-engine/) runs client-side on the chart image via canvas, deterministic, recomputed on view and never stored; kept separate from AI result so both can be compared.
