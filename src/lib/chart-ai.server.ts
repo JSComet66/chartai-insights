@@ -91,8 +91,33 @@ const SCHEMA = {
     bullish_factors: { type: "array", items: factorSchema },
     bearish_factors: { type: "array", items: factorSchema },
     conviction_explanation: { type: "string" },
+    temporal_confirmations: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "zone_low", "zone_high", "zone_label", "observation_window_min", "observation_window_max",
+          "time_unit", "scenario", "confirmation_condition", "invalidation_condition", "explanation",
+        ],
+        properties: {
+          zone_low: { type: ["number", "null"] },
+          zone_high: { type: ["number", "null"] },
+          zone_label: { type: "string" },
+          observation_window_min: { type: ["number", "null"] },
+          observation_window_max: { type: ["number", "null"] },
+          time_unit: { type: "string", enum: ["secondes", "minutes", "heures", "jours"] },
+          scenario: { type: "string", enum: ["bullish", "bearish", "neutral"] },
+          confirmation_condition: { type: "string" },
+          invalidation_condition: { type: "string" },
+          explanation: { type: "string" },
+        },
+      },
+    },
+    temporal_undetermined_reason: nullableString,
   },
 };
+SCHEMA.required.push("temporal_confirmations", "temporal_undetermined_reason");
 
 const SYSTEM_PROMPT = `Tu es ChartAI, un assistant d'analyse technique ÉDUCATIVE de graphiques de trading. Tu réponds exclusivement en français.
 
@@ -115,7 +140,13 @@ Conviction technique :
 - Reste prudent : si la capture est floue, partielle ou pauvre en informations, garde les deux scores modérés ou bas (rarement au-delà de 60).
 - data_quality : low / medium / high selon la lisibilité et la quantité d'informations visibles.
 - bullish_factors / bearish_factors : 2 à 5 facteurs courts (quelques mots). kind = "positive" pour un élément qui soutient le scénario, "warning" pour une limite ou un élément manquant.
-- conviction_explanation : 1 à 3 phrases expliquant ce qui soutient et limite chaque conviction, basées uniquement sur les éléments détectés. N'écris jamais « X% de chances », écris « X% de conviction technique … selon les éléments visibles ».`;
+- conviction_explanation : 1 à 3 phrases expliquant ce qui soutient et limite chaque conviction, basées uniquement sur les éléments détectés. N'écris jamais « X% de chances », écris « X% de conviction technique … selon les éléments visibles ».
+
+Confirmation temporelle (séparée de la conviction) :
+- temporal_confirmations : 0 à 3 entrées, une par zone importante visible (support/résistance clé). Pour chacune : zone_low / zone_high (nombres lisibles, sinon null), zone_label (ex. « ≈ 82 875 $ – 82 905 $ »), une fenêtre d'observation [observation_window_min, observation_window_max] dans time_unit, le scénario concerné, une condition de confirmation (maintien dans/au-dessus de la zone sans cassure significative), une condition d'invalidation (sortie nette de la zone) et une courte explication.
+- La fenêtre est une DURÉE DE MAINTIEN À OBSERVER, jamais une prédiction. Adapte-la au timeframe et à la structure visible. Repères indicatifs : 1 min → 30 s à 3 min ; 5 min → 2 à 10 min ; 15 min → 5 à 30 min ; 1 h → 15 min à 2 h ; 4 h → 1 h à 8 h ; 1 jour → plusieurs heures à plusieurs jours.
+- Vocabulaire : « fenêtre d'observation », « durée de confirmation », « maintien à observer ». N'écris jamais « le prix restera X minutes », « le marché montera dans X minutes » ni aucune probabilité.
+- Si aucune fenêtre raisonnable ne peut être déterminée (timeframe inconnu, zone illisible…) : laisse observation_window_min/max à null pour la zone concernée ou renvoie un tableau vide, et explique pourquoi dans temporal_undetermined_reason. Sinon temporal_undetermined_reason = null. N'invente jamais de durée.`;
 
 export class ChartAIError extends Error {
   constructor(message: string, public status = 500) {

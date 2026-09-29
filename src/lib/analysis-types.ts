@@ -41,9 +41,25 @@ export type AnalysisResult = {
   bullish_factors?: ConvictionFactor[];
   bearish_factors?: ConvictionFactor[];
   conviction_explanation?: string;
+  // Confirmation temporelle (absent on older analyses)
+  temporal_confirmations?: TemporalConfirmation[];
+  temporal_undetermined_reason?: string | null;
 };
 
 export type ConvictionFactor = { label: string; kind: "positive" | "warning" };
+
+export type TemporalConfirmation = {
+  zone_low: number | null;
+  zone_high: number | null;
+  zone_label: string;
+  observation_window_min: number | null;
+  observation_window_max: number | null;
+  time_unit: "secondes" | "minutes" | "heures" | "jours";
+  scenario: "bullish" | "bearish" | "neutral";
+  confirmation_condition: string;
+  invalidation_condition: string;
+  explanation: string;
+};
 
 export type AnalysisRow = {
   id: string;
