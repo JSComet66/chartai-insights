@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, HelpCircle, Check } from "lucide-react";
-import type { AnalysisRow, AnalysisResult, Level, ConvictionFactor } from "@/lib/analysis-types";
+import type { AnalysisRow, AnalysisResult, Level, ConvictionFactor, TemporalConfirmation } from "@/lib/analysis-types";
 
 const trendStyle: Record<AnalysisResult["trend"], { cls: string; Icon: typeof TrendingUp; label: string }> = {
   haussière: { cls: "text-bullish bg-bullish/10 border-bullish/30", Icon: TrendingUp, label: "Haussière" },
@@ -149,6 +149,24 @@ export function AnalysisView({ row, imageUrl }: { row: AnalysisRow; imageUrl: st
           </Section>
         )}
 
+        {Array.isArray(r.temporal_confirmations) && (
+          <Section title="⏱ Confirmation temporelle">
+            {r.temporal_confirmations.length === 0 ? (
+              <div className="rounded-lg border bg-surface p-4">
+                <p className="text-sm font-semibold">Fenêtre temporelle indéterminée</p>
+                <p className="mt-1 text-sm text-muted-foreground">{r.temporal_undetermined_reason || "Les données visibles sont insuffisantes pour estimer une fenêtre d'observation."}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {r.temporal_confirmations.map((t, i) => (
+                  <TemporalCard key={i} t={t} index={i} multiple={r.temporal_confirmations!.length > 1} reason={r.temporal_undetermined_reason ?? null} />
+                ))}
+              </div>
+            )}
+            <p className="mt-3 text-[11px] text-muted-foreground/80">Cette durée est une fenêtre d'observation technique et non une prédiction du comportement futur du marché. Elle est indépendante du score de conviction.</p>
+          </Section>
+        )}
+
         <Section title="Scénarios possibles">
           <div className="space-y-3">
             {r.bullish_scenario && (
@@ -192,6 +210,43 @@ export function AnalysisView({ row, imageUrl }: { row: AnalysisRow; imageUrl: st
 }
 
 const dataQualityLabel = { low: "Faible", medium: "Moyenne", high: "Élevée" } as const;
+
+const unitShort = { secondes: "s", minutes: "min", heures: "h", jours: "j" } as const;
+const scenarioInfo = {
+  bullish: { label: "🟢 Haussier", cls: "text-bullish", border: "border-bullish/30", bar: "bg-bullish" },
+  bearish: { label: "🔴 Baissier", cls: "text-bearish", border: "border-bearish/30", bar: "bg-bearish" },
+  neutral: { label: "🔵 Neutre", cls: "text-info", border: "border-info/30", bar: "bg-info" },
+} as const;
+
+function TemporalCard({ t, index, multiple, reason }: { t: TemporalConfirmation; index: number; multiple: boolean; reason: string | null }) {
+  const s = scenarioInfo[t.scenario] ?? scenarioInfo.neutral;
+  const hasWindow = t.observation_window_min != null && t.observation_window_max != null;
+  const u = unitShort[t.time_unit] ?? t.time_unit;
+  return (
+    <div className={`rounded-lg border bg-surface p-4 ${s.border}`}>
+      {multiple && <p className="text-xs uppercase tracking-wider text-muted-foreground">Niveau {index + 1}</p>}
+      <dl className="mt-1 grid gap-3 sm:grid-cols-3">
+        <div><dt className="text-xs text-muted-foreground">Zone à surveiller</dt><dd className="font-mono text-sm font-medium">{t.zone_label}</dd></div>
+        <div><dt className="text-xs text-muted-foreground">Fenêtre d'observation</dt><dd className="font-mono text-sm font-semibold">{hasWindow ? `${t.observation_window_min}–${t.observation_window_max} ${u}` : "Indéterminée"}</dd></div>
+        <div><dt className="text-xs text-muted-foreground">Scénario concerné</dt><dd className={`text-sm font-semibold ${s.cls}`}>{s.label}</dd></div>
+      </dl>
+      {hasWindow ? (
+        <div className="mt-4 flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span>Début</span>
+          <div className="relative h-1.5 flex-1 rounded-full bg-muted"><div className={`absolute inset-0 rounded-full opacity-70 ${s.bar}`} /></div>
+          <span>Observation</span>
+          <div className="relative h-1.5 flex-1 rounded-full bg-muted"><div className={`absolute inset-0 rounded-full opacity-70 ${s.bar}`} /></div>
+          <span>Fin</span>
+        </div>
+      ) : reason && <p className="mt-3 text-sm text-muted-foreground">{reason}</p>}
+      <dl className="mt-4 space-y-2">
+        <div><dt className="text-xs text-muted-foreground">Pour renforcer le scénario</dt><dd className="text-sm">{t.confirmation_condition}</dd></div>
+        <div><dt className="text-xs text-muted-foreground">Pour invalider le scénario</dt><dd className="text-sm">{t.invalidation_condition}</dd></div>
+      </dl>
+      {t.explanation && <p className="mt-3 text-xs text-muted-foreground">{t.explanation}</p>}
+    </div>
+  );
+}
 
 function ConvictionCard({ title, value, tone, factors, factorsTitle }: {
   title: string; value: number; tone: "bullish" | "bearish"; factors: ConvictionFactor[]; factorsTitle: string;
