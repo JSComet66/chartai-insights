@@ -21,27 +21,31 @@ export const runAnalysis = createServerFn({ method: "POST" })
       return { ok: false, error: "Image invalide." };
     }
 
+    const { runExternalAnalysis, isExternalAnalysisReady } = await import("./external-analysis/service.server");
+    const { ExternalAnalysisError } = await import("./external-analysis/types");
+    const { SERVICE_NOT_READY_MESSAGE } = await import("./external-analysis/provider.server");
+    if (!isExternalAnalysisReady()) return { ok: false, error: SERVICE_NOT_READY_MESSAGE };
+
     const { data: blob, error: dlError } = await supabase.storage.from("charts").download(data.imagePath);
     if (dlError || !blob) {
       return { ok: false, error: "Image introuvable. Importez-la à nouveau." };
     }
     const bytes = new Uint8Array(await blob.arrayBuffer());
-    let bin = "";
-    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    const mime = blob.type && blob.type.startsWith("image/") ? blob.type : "image/png";
-    const dataUrl = `data:${mime};base64,${btoa(bin)}`;
+    const ext = data.imagePath.split(".").pop()?.toLowerCase();
+    const mimeType = blob.type?.startsWith("image/")
+      ? blob.type
+      : ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
 
-    const { analyzeChartImage, ChartAIError } = await import("./chart-ai.server");
     let result;
     try {
-      result = await analyzeChartImage({
-        imageUrl: dataUrl,
+      result = await runExternalAnalysis({
+        image: { bytes, mimeType },
         asset: data.asset ?? null,
         timeframe: data.timeframe ?? null,
         market: data.market ?? null,
       });
     } catch (e) {
-      if (e instanceof ChartAIError) return { ok: false, error: e.message };
+      if (e instanceof ExternalAnalysisError) return { ok: false, error: e.message };
       console.error(e);
       return { ok: false, error: "L'analyse a échoué. Réessayez dans quelques instants." };
     }
