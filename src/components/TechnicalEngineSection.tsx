@@ -54,7 +54,7 @@ export function TechnicalEngineSection({ imageUrl, ai, analysisId }: { imageUrl:
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-1">Comparaison</th><th>GPT-6 Astra</th><th>Moteur ChartAI</th></tr></thead>
+              <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-1">Comparaison</th><th>Analyse IA</th><th>Moteur ChartAI</th></tr></thead>
               <tbody className="[&_td]:border-t [&_td]:py-2">
                 <tr><td>Tendance</td><td>{ai.trend}</td><td>{TREND_FR[data.trend]}</td></tr>
                 <tr><td>Conviction / score</td><td>{ai.bullish_conviction ?? "—"} haussière · {ai.bearish_conviction ?? "—"} baissière</td><td>{data.technical_score ?? "—"} (50 = neutre)</td></tr>
