@@ -86,7 +86,8 @@ const arr = <T>(v: unknown, map: (x: unknown) => T, max = 12): T[] => {
   if (!Array.isArray(v)) throw new Invalid();
   return v.slice(0, max).map(map);
 };
-const o = (v: unknown): R => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const o = (v: unknown): any => {
   if (!isObj(v)) throw new Invalid();
   return v;
 };
